@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>window.HOERKURS_CLIPS = true;</script>
+</head>
+<body>
+<title>Hörkurs Deutsch</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#c5e32f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one column, phone first. A home list of levels and lessons, and a full-screen player with one big button. */
+:root {
+  --bg: #f4f6ec;
+  --surface: #ffffff;
+  --fg: #1a1e10;
+  --muted: #5b6248;
+  --line: #dde2cb;
+  --accent: #c5e32f;
+  --accent-ink: #1a1e10;
+  --accent-text: #556d00;
+  --ring-track: #e3e8d2;
+  --danger: #a3361f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11140b; --surface: #1a1e12; --fg: #edf1de; --muted: #a2aa8b; --line: #2b311d;
+    --accent: #c5e32f; --accent-ink: #11140b; --accent-text: #c5e32f; --ring-track: #262c18; --danger: #f08a6c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11140b; --surface: #1a1e12; --fg: #edf1de; --muted: #a2aa8b; --line: #2b311d;
+  --accent: #c5e32f; --accent-ink: #11140b; --accent-text: #c5e32f; --ring-track: #262c18; --danger: #f08a6c;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+.wrap { max-width: 560px; margin: 0 auto; padding-block: 18px 40px; display: flex; flex-direction: column; gap: 22px; }
+
+/* Header */
+.top { display: flex; align-items: center; gap: 12px; }
+.brand { flex: 1; min-width: 0; }
+.brand h1 { font-family: var(--font-display); font-weight: 800; font-size: 1.85rem; letter-spacing: -0.02em; line-height: 1; margin: 0; }
+.brand p { margin: 6px 0 0; color: var(--muted); font-size: 0.92rem; }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; cursor: pointer; flex: none; }
+.icon-btn svg { width: 22px; height: 22px; }
+
+/* Continue card */
+.resume { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radius); background: var(--accent); color: var(--accent-ink); border: 0; text-align: left; cursor: pointer; width: 100%; }
+.resume .play-dot { width: 46px; height: 46px; border-radius: 50%; background: var(--accent-ink); color: var(--accent); display: grid; place-items: center; flex: none; }
+.resume .play-dot svg { width: 20px; height: 20px; margin-left: 3px; }
+.resume strong { display: block; font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
+.resume span { font-size: 0.9rem; }
+
+/* Level tabs */
+.levels { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.lv { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 0 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.lv b { font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; }
+.lv small { font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lv[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.lv[aria-pressed="true"] small { color: var(--bg); opacity: 0.75; }
+.level-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.level-head h2 { font-family: var(--font-display); font-size: 1.3rem; margin: 0; font-weight: 700; }
+.level-head span { color: var(--muted); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+
+/* Lesson list */
+.lessons { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.lesson { display: grid; grid-template-columns: 2.4rem 1fr auto; align-items: center; gap: 12px; padding: 13px 4px; border-bottom: 1px solid var(--line); background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left; cursor: pointer; }
+.lesson .num { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: center; }
+.lesson .txt { min-width: 0; }
+.lesson .txt b { display: block; font-weight: 700; }
+.lesson .txt span { display: block; color: var(--muted); font-size: 0.88rem; }
+.lesson .meta { font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.lesson.done .num { background: var(--accent); color: var(--accent-ink); border-radius: 50%; width: 2.1rem; height: 2.1rem; display: grid; place-items: center; font-size: 0.95rem; justify-self: center; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 0; }
+.install { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 12px 14px; border-radius: var(--radius); cursor: pointer; font: inherit; }
+.install b { display: block; }
+.save { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 8px 14px; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 700; font-size: 0.9rem; }
+.save svg { width: 18px; height: 18px; color: var(--accent-text); flex: none; }
+.save[disabled] { cursor: default; }
+.save.saved { border-color: transparent; background: transparent; padding-left: 0; color: var(--muted); }
+.install small { color: var(--muted); }
+.install svg { flex: none; width: 26px; height: 26px; color: var(--accent-text); }
+
+/* Player */
+.player { position: fixed; inset: 0; background: var(--bg); z-index: 20; display: flex; flex-direction: column; overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 18px) max(16px, env(safe-area-inset-left, 0px)); }
+.player-in { max-width: 520px; width: 100%; margin: 0 auto; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+.p-top { display: flex; align-items: center; gap: 12px; }
+.p-title { flex: 1; min-width: 0; }
+.p-title small { display: block; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.p-title b { display: block; font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 340px; }
+.ring { position: relative; width: min(68vw, 260px); aspect-ratio: 1; max-width: 100%; }
+.ring svg.track { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 7; }
+.ring .bg { stroke: var(--ring-track); }
+.ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
+.big { position: absolute; inset: 16px; border-radius: 50%; border: 0; background: var(--fg); color: var(--bg); display: grid; place-items: center; cursor: pointer; }
+.big svg { width: 34%; height: 34%; }
+.big .pl { margin-left: 8%; }
+.ring.on .big { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(0.97); } }
+@media (prefers-reduced-motion: reduce) { .ring.on .big { animation: none; } .ring .fg { transition: none; } }
+.phase { text-align: center; display: flex; flex-direction: column; gap: 4px; min-height: 3.6em; }
+.phase b { font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; }
+.phase span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.speaker { display: inline-flex; gap: 6px; align-items: center; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-text); font-weight: 700; justify-content: center; }
+.transcript { text-align: center; font-size: 1.15rem; min-height: 2.8em; max-width: 30ch; overflow-wrap: anywhere; }
+.controls { display: flex; justify-content: center; align-items: center; gap: 22px; }
+.ctl { width: 58px; height: 58px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; cursor: pointer; }
+.ctl svg { width: 26px; height: 26px; }
+.ctl-label { display: block; font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 4px; }
+.ctl-wrap { display: flex; flex-direction: column; align-items: center; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+
+/* Sheets and alerts */
+.sheet { position: fixed; inset: 0; z-index: 40; background: rgba(10, 12, 6, 0.45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-in { background: var(--bg); width: 100%; max-width: 560px; max-height: 88%; overflow-y: auto; border-radius: 20px 20px 0 0;
+  padding: 20px max(18px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; }
+.sheet-in h2 { font-family: var(--font-display); margin: 0; font-size: 1.4rem; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label, .field > .lab { font-weight: 700; }
+.field small { color: var(--muted); }
+.row { display: flex; gap: 8px; align-items: center; }
+select { flex: 1; min-width: 0; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.switch { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 0; }
+.switch span { min-width: 0; }
+.switch small { display: block; color: var(--muted); }
+.switch input { width: 46px; height: 28px; accent-color: var(--accent-text); flex: none; }
+.alert { border: 1px solid var(--danger); color: var(--fg); background: var(--surface); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.alert b { color: var(--danger); }
+.alert p { margin: 0; font-size: 0.92rem; }
+.how { margin: 0; padding-left: 1.1rem; font-size: 0.92rem; display: flex; flex-direction: column; gap: 6px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 999px; z-index: 60; font-weight: 700; max-width: calc(100% - 32px); text-align: center; }
+</style>
+
+<div class="wrap" id="home">
+  <header class="top">
+    <div class="brand">
+      <h1>Hörkurs Deutsch</h1>
+      <p>Learn German by listening, A1 to C2</p>
+    </div>
+    <button class="icon-btn" id="open-settings" type="button" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </header>
+  <button class="install" id="install" type="button" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+    <span><b>Install as an app</b><small>Adds Hörkurs to your home screen. It then opens and plays without internet.</small></span>
+  </button>
+  <div id="voice-alert"></div>
+  <div id="resume-slot"></div>
+  <nav class="levels" id="levels" aria-label="Level"></nav>
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <div class="level-head"><h2 id="level-title"></h2><span id="level-count"></span></div>
+    <div id="level-save"></div>
+    <ul class="lessons" id="lessons"></ul>
+  </section>
+  <p class="note">Each lesson teaches its new words by ear: the word, its meaning, the example sentence word by word, then the whole sentence, with pauses for you to repeat. A short spoken review ends every lesson. The screen stays on while you listen. With the German voice installed on your phone (see Settings), lessons keep playing without internet once this page is open.</p>
+</div>
+
+<div class="player" id="player" hidden>
+  <div class="player-in">
+    <div class="p-top">
+      <button class="icon-btn" id="close-player" type="button" aria-label="Back to lessons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="p-title"><small id="p-level"></small><b id="p-name"></b></div>
+      <button class="icon-btn" id="open-settings-2" type="button" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      </button>
+    </div>
+    <div class="stage">
+      <div class="ring" id="ring">
+        <svg class="track" viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="46"/><circle class="fg" id="ring-fg" cx="50" cy="50" r="46" stroke-dasharray="289.03" stroke-dashoffset="289.03"/></svg>
+        <button class="big" id="big" type="button" aria-label="Play">
+          <svg class="pl" id="ico-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>
+          <svg id="ico-pause" viewBox="0 0 24 24" fill="currentColor" hidden><rect x="5.5" y="4" width="4.5" height="16" rx="1.2"/><rect x="14" y="4" width="4.5" height="16" rx="1.2"/></svg>
+        </button>
+      </div>
+      <div class="phase" aria-live="polite">
+        <div class="speaker" id="speaker"></div>
+        <b id="phase">Tap to start</b>
+        <span id="counter"></span>
+      </div>
+      <div class="transcript" id="transcript" hidden></div>
+    </div>
+    <div class="controls">
+      <div class="ctl-wrap"><button class="ctl" id="prev" type="button" aria-label="Previous word"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5.5v13a1 1 0 0 1-1.55.83L9.5 13.2a1.4 1.4 0 0 1 0-2.4l8.95-6.13A1 1 0 0 1 20 5.5z"/></svg></button><span class="ctl-label">Back</span></div>
+      <div class="ctl-wrap"><button class="ctl" id="again" type="button" aria-label="Repeat this word"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button><span class="ctl-label">Again</span></div>
+      <div class="ctl-wrap"><button class="ctl" id="next" type="button" aria-label="Next word"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5.5v13a1 1 0 0 0 1.55.83l8.95-6.13a1.4 1.4 0 0 0 0-2.4L5.55 4.67A1 1 0 0 0 4 5.5z"/></svg></button><span class="ctl-label">Next</span></div>
+    </div>
+    <div class="bar" id="speed-bar" aria-label="Speed"></div>
+  </div>
+</div>
+
+<div class="sheet" id="settings" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="row" style="justify-content:space-between"><h2 id="settings-title">Settings</h2><button class="btn" id="close-settings" type="button">Done</button></div>
+    <label class="switch" id="rec-row" hidden><span>Recorded Google voice<small>The same natural voice on every phone. Saved levels play without internet.</small></span><input type="checkbox" id="opt-rec"></label>
+    <div class="field">
+      <label for="voice-de" id="voice-de-label">German voice</label>
+      <div class="row"><select id="voice-de"></select><button class="btn" id="test-de" type="button">Test</button></div>
+    </div>
+    <div class="field">
+      <label for="voice-en" id="voice-en-label">English voice</label>
+      <div class="row"><select id="voice-en"></select><button class="btn" id="test-en" type="button">Test</button></div>
+    </div>
+    <div class="field">
+      <span class="lab">Google's German voice, offline (Android)</span>
+      <ol class="how">
+        <li>Open the phone's Settings and search for <b>Text-to-speech output</b>.</li>
+        <li>Set <b>Preferred engine</b> to <b>Speech Services by Google</b>.</li>
+        <li>Tap the gear next to it, then <b>Install voice data</b>, then <b>Deutsch (Deutschland)</b>, and download it. Do the same for <b>English</b>.</li>
+        <li>Come back to this page, pick the voice above and tap Test. Voices marked "on this device" work without internet.</li>
+      </ol>
+    </div>
+    <div class="field">
+      <span class="lab">Pause to repeat</span>
+      <div class="bar" id="gap-bar" style="justify-content:flex-start"></div>
+      <small>How long the app waits for you to say the word or sentence yourself.</small>
+    </div>
+    <label class="switch"><span>Word by word<small>Each part of the sentence, then its meaning</small></span><input type="checkbox" id="opt-words"></label>
+    <label class="switch"><span>Spoken review<small>At the end: hear the English, say the German</small></span><input type="checkbox" id="opt-review"></label>
+    <label class="switch"><span>Play the next lesson<small>Keep going when a lesson ends</small></span><input type="checkbox" id="opt-next"></label>
+    <label class="switch"><span>Show text<small>Off keeps the course audio only</small></span><input type="checkbox" id="opt-text"></label>
+    <button class="btn" id="reset" type="button">Clear my progress</button>
+  </div>
+</div>
+
+<script src="course.js"></script>
+<script src="steps.js"></script>
+<script>
+(function () {
+  "use strict";
+  const C = window.LISTEN;
+  const $ = (id) => document.getElementById(id);
+  const synth = window.speechSynthesis;
+  /* Recorded clips, when tools/record-listen.js has made them. */
+  const A = C.audio;
+  let clipMisses = 0;
+
+  /* ---------- Saved progress and settings (this phone only) ---------- */
+  const KEY = "hoerkurs-v1";
+  const DEFAULTS = { rate: 0.9, gaps: 1, words: true, review: true, next: true, text: false, de: "", en: "", level: "a1", rec: true };
+  let S = { done: {}, pos: null, dl: {}, set: { ...DEFAULTS } };
+  try { const raw = JSON.parse(localStorage.getItem(KEY) || "null"); if (raw) S = { done: raw.done || {}, pos: raw.pos || null, dl: raw.dl || {}, set: { ...DEFAULTS, ...(raw.set || {}) } }; } catch (_) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
+
+  /* ---------- Voices ---------- */
+  let voices = [];
+  const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|grandma|grandpa|eddy|flo\b|reed|rocko|sandy|shelley/i;
+  const norm = (lang) => String(lang || "").toLowerCase().replace("_", "-");
+  /* The same order as the main course app (js/speech.js): natural voices (Microsoft Edge), then high-quality
+     installed voices, then Google voices (Google Deutsch in Chrome on a computer, online only), then the rest.
+     The rest includes the phone's own voice on Android, which Chrome lists under a plain name like "Deutsch Deutschland". */
+  const TIERS = [
+    { label: "natural", test: (id) => /natural|neural/i.test(id) },
+    { label: "high quality", test: (id) => /premium|enhanced|siri/i.test(id) },
+    { label: "Google", test: (id) => /google/i.test(id) },
+    { label: "", test: () => true },
+  ];
+  const tierOf = (v) => TIERS.findIndex((t) => t.test(`${v.name} ${v.voiceURI}`));
+  function score(v, home) {
+    let s = (TIERS.length - 1 - tierOf(v)) * 10;
+    if (home.includes(norm(v.lang))) s += 2;
+    /* Voices installed on the phone work offline. On Android these come from Speech Services by Google. */
+    if (v.localService) s += 1;
+    if (NOVELTY.test(v.name)) s -= 100;
+    return s;
+  }
+  const offline = () => navigator.onLine === false;
+  function listFor(lang) {
+    const home = lang === "de" ? ["de-de"] : ["en-us", "en-gb"];
+    return voices.filter((v) => norm(v.lang).startsWith(lang)).sort((a, b) => score(b, home) - score(a, home) || a.name.localeCompare(b.name));
+  }
+  function voiceFor(lang) {
+    let list = listFor(lang);
+    /* Without internet, an online voice cannot start, so use an installed one. */
+    if (offline() && list.some((v) => v.localService)) list = list.filter((v) => v.localService);
+    return list.find((v) => v.voiceURI === S.set[lang]) || list[0] || null;
+  }
+  function loadVoices() { voices = synth ? synth.getVoices() : []; fillVoiceMenus(); renderVoiceAlert(); }
+  if (synth) { loadVoices(); synth.addEventListener ? synth.addEventListener("voiceschanged", loadVoices) : (synth.onvoiceschanged = loadVoices); }
+
+  let keepAlive = null;
+  /* Speaks one line. Resolves true when it ends, false when the voice never started, null when stopped. */
+  function speak(text, lang, rate) {
+    return new Promise((resolve) => {
+      if (!synth) { resolve(false); return; }
+      const u = new SpeechSynthesisUtterance(text);
+      const v = voiceFor(lang);
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = lang === "de" ? "de-DE" : "en-US";
+      u.rate = Math.max(0.5, Math.min(1.5, rate));
+      let finished = false, started = false, hang = null;
+      const finish = (ok) => { if (finished) return; finished = true; clearTimeout(noStart); clearTimeout(hang); resolve(ok); };
+      const noStart = setTimeout(() => { if (!started) { if (keepAlive === u) synth.cancel(); finish(false); } }, 6000);
+      u.onstart = () => { started = true; clearTimeout(noStart); hang = setTimeout(() => finish(true), 5000 + (text.length * 160) / u.rate); };
+      u.onend = () => finish(true);
+      u.onerror = (e) => {
+        /* Chrome refuses speech until the page has been tapped. */
+        if (e.error === "not-allowed") { finish(null); notAllowed(); return; }
+        finish(e.error === "interrupted" || e.error === "canceled" ? null : started);
+      };
+      keepAlive = u;
+      synth.speak(u);
+    });
+  }
+
+  /* ---------- Recorded Google voice (tools/record-listen.js) ---------- */
+  const clipPlayer = new Audio();
+  clipPlayer.preload = "auto";
+  /* Clips the hosted app can play: never on claude.ai, which has no clip files. */
+  /* Only the hosted copy (listen/index.html, which sets HOERKURS_CLIPS) has the clip files; the claude.ai copy does not. */
+  function clipsOn() { return Boolean(A && S.set.rec && window.HOERKURS_CLIPS); }
+  /* After three missing clips in a row, the rest of the lesson uses the phone's voice. */
+  function useClips() { return clipsOn() && clipMisses < 3; }
+  const clipUrls = new Map();
+  /* Each clip is fetched whole (the offline store answers when it has it), and the next ones load ahead. */
+  function loadClip(rel) {
+    if (clipUrls.has(rel)) return clipUrls.get(rel);
+    const p = fetch(rel).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.blob(); }).then((b) => URL.createObjectURL(b));
+    clipUrls.set(rel, p);
+    p.catch(() => clipUrls.delete(rel));
+    if (clipUrls.size > 16) { const [k, old] = clipUrls.entries().next().value; clipUrls.delete(k); old.then((u) => setTimeout(() => URL.revokeObjectURL(u), 30000), () => {}); }
+    return p;
+  }
+  let clipDone = null;
+  function stopClip() { clipPlayer.pause(); if (clipDone) clipDone(null); }
+  /* Resolves true when the clip ends, false when it cannot play, null when stopped. */
+  async function playClip(step, run) {
+    let url;
+    try { url = await loadClip(HK.clipPath(A, step)); } catch (_) { return false; }
+    if (run !== P.run) return null;
+    return new Promise((resolve) => {
+      stopClip();
+      let hang = null;
+      const finish = (v) => { if (clipDone !== finish) return; clipDone = null; clearTimeout(hang); resolve(v); };
+      clipDone = finish;
+      clipPlayer.onended = () => finish(true);
+      clipPlayer.onerror = () => finish(false);
+      const rate = Math.max(0.5, Math.min(2, step.rate / HK.recPace(step.k, step.f)));
+      clipPlayer.src = url;
+      clipPlayer.defaultPlaybackRate = rate; clipPlayer.playbackRate = rate;
+      clipPlayer.play().then(() => {
+        hang = setTimeout(() => finish(true), ((clipPlayer.duration || 20) / rate) * 1000 + 4000);
+      }, (e) => {
+        if (e && e.name === "NotAllowedError") { finish(null); notAllowed(); } else finish(false);
+      });
+    });
+  }
+  function prefetch(from) {
+    if (!useClips()) return;
+    for (let j = from, n = 0; j < P.steps.length && n < 3; j++) {
+      const s = P.steps[j];
+      if (s.k === "de" || s.k === "en") { n++; loadClip(HK.clipPath(A, s)).catch(() => {}); }
+    }
+  }
+  /* A spoken step: the recording when there is one, otherwise the phone's voice. */
+  async function say(s, run) {
+    if (useClips()) {
+      prefetch(P.i + 1);
+      const ok = await playClip(s, run);
+      if (ok !== false) { clipMisses = 0; return ok; }
+      clipMisses++;
+      if (run !== P.run) return null;
+    }
+    return speak(s.text, s.k, s.rate);
+  }
+
+  /* Soft tones mark a new word and the end of a lesson. */
+  let audio = null;
+  function tone(kind) {
+    return new Promise((resolve) => {
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        if (audio.state === "suspended") audio.resume();
+        const notes = kind === "done" ? [523.25, 659.25, 783.99] : kind === "review" ? [587.33, 440] : [880];
+        const t0 = audio.currentTime + 0.02;
+        notes.forEach((f, i) => {
+          const o = audio.createOscillator(), g = audio.createGain();
+          o.type = "sine"; o.frequency.value = f;
+          const t = t0 + i * 0.16;
+          g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.16, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+          o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 0.55);
+        });
+        setTimeout(resolve, 260 + notes.length * 160);
+      } catch (_) { resolve(); }
+    });
+  }
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* Keep the screen on while playing, because phones stop speech when the screen locks. */
+  let lock = null;
+  async function wake(on) {
+    try {
+      if (on && !lock && navigator.wakeLock) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => { lock = null; }); }
+      if (!on && lock) { await lock.release(); lock = null; }
+    } catch (_) { lock = null; }
+  }
+
+  /* ---------- Lesson audio script (listen/steps.js, shared with the recording tool) ---------- */
+  const HK = window.HK;
+  const words = HK.words;
+  const buildSteps = (level, lesson) => HK.buildSteps(lesson, S.set);
+
+  function minutes(lesson) {
+    let sec = 4;
+    lesson.items.forEach((it) => {
+      sec += 6 + it.w.length * 0.16 + it.m.length * 0.07 + it.x.length * 0.07 * 2.3 + (it.xe || "").length * 0.065 + Math.max(1.6, words(it.x) * 0.6);
+      if (it.p) sec += it.p.reduce((s, [d, e]) => s + d.length * 0.09 + e.length * 0.065 + 0.9, 0);
+      sec += 5.5;
+    });
+    return Math.round(sec / 60);
+  }
+
+  /* ---------- Player ---------- */
+  const P = { level: null, lesson: null, steps: [], i: 0, playing: false, run: 0, fails: 0 };  const findLevel = (id) => C.levels.find((l) => l.id === id);
+  const findLesson = (level, n) => level.lessons.find((l) => l.n === n);
+
+  function openLesson(levelId, n, startStep) {
+    const level = findLevel(levelId), lesson = level && findLesson(level, n);
+    if (!lesson) return;
+    stop();
+    P.level = level; P.lesson = lesson; P.steps = buildSteps(level, lesson); clipMisses = 0;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: lesson.t, artist: `Hörkurs Deutsch · ${level.name} · Lesson ${lesson.n}`,
+        artwork: [{ src: "icons/icon-512.png", sizes: "512x512", type: "image/png" }] });
+    } catch (_) {}
+    P.i = Math.min(startStep || 0, P.steps.length - 1);
+    $("p-level").textContent = `${level.name} · Lesson ${lesson.n}`;
+    $("p-name").textContent = lesson.t;
+    $("player").hidden = false;
+    if (standalone && !(history.state && history.state.hk)) { try { history.pushState({ hk: 1 }, ""); } catch (_) {} }
+    document.body.style.overflow = "hidden";
+    renderStep();
+    play();
+  }
+
+  function itemStart(it) { const i = P.steps.findIndex((s) => s.it === it); return i < 0 ? P.steps.length - 1 : i; }
+  function currentItem() { return P.steps[Math.min(P.i, P.steps.length - 1)].it; }
+
+  function renderStep() {
+    const s = P.steps[Math.min(P.i, P.steps.length - 1)], lesson = P.lesson, n = lesson.items.length;
+    $("phase").textContent = P.playing || P.i > 0 ? s.label : "Tap to start";
+    let counter = "";
+    if (s.it >= 0 && s.it < n) counter = `Word ${s.it + 1} of ${n}`;
+    else if (s.it === n) counter = "End of lesson";
+    $("counter").textContent = counter;
+    $("speaker").textContent = s.k === "de" ? "Deutsch" : s.k === "en" ? "English" : "";
+    const tr = $("transcript");
+    tr.hidden = !S.set.text;
+    if (S.set.text) {
+      /* During a pause, keep showing the line just spoken. */
+      let j = Math.min(P.i, P.steps.length - 1);
+      while (j > 0 && P.steps[j].k !== "de" && P.steps[j].k !== "en") j--;
+      const line = P.steps[j];
+      tr.textContent = line.text || ""; tr.lang = line.k;
+    }
+    const frac = P.steps.length > 1 ? P.i / (P.steps.length - 1) : 0;
+    $("ring-fg").style.strokeDashoffset = String(289.03 * (1 - frac));
+    $("ring").classList.toggle("on", P.playing);
+    /* Icons are SVG elements, which have no .hidden property, so set the attribute itself. */
+    $("ico-play").toggleAttribute("hidden", P.playing); $("ico-pause").toggleAttribute("hidden", !P.playing);
+    $("big").setAttribute("aria-label", P.playing ? "Pause" : "Play");
+    try { navigator.mediaSession.playbackState = P.playing ? "playing" : "paused"; } catch (_) {}
+  }
+
+  function savePos() {
+    if (!P.lesson) return;
+    const it = currentItem();
+    /* The closing words are not a place to come back to: finishing already saved the next lesson. */
+    if (it > P.lesson.items.length) return;
+    S.pos = { level: P.level.id, n: P.lesson.n, step: itemStart(it), it };
+    save();
+  }
+
+  async function loop() {
+    const run = ++P.run;
+    /* Chrome can drop a line spoken right after a cancel, so give it a moment. */
+    await wait(120);
+    while (P.playing && run === P.run && P.i < P.steps.length) {
+      const s = P.steps[P.i];
+      renderStep();
+      if (s.k === "gap") await wait(s.ms);
+      else if (s.k === "tone") await tone(s.t);
+      else {
+        const ok = await say(s, run);
+        if (run !== P.run) return;
+        if (ok === false) {
+          P.fails++;
+          if (P.fails >= 2) { pause(); showToast("The voice did not start. Tap play to try again, or pick another voice in Settings."); return; }
+          continue;
+        }
+        P.fails = 0;
+      }
+      if (run !== P.run) return;
+      P.i++;
+      if (P.i < P.steps.length && P.steps[P.i].it !== s.it) savePos();
+    }
+    if (run === P.run && P.i >= P.steps.length) finishLesson();
+  }
+
+  function play() {
+    if (!synth && !A) { showToast("This browser cannot speak. Open the page in Safari or Chrome."); return; }
+    if (P.i >= P.steps.length) P.i = 0;
+    P.playing = true; P.fails = 0;
+    /* Speaking once inside the tap unlocks speech on iPhone. */
+    if (synth) synth.cancel();
+    if (audio && audio.state === "suspended") audio.resume();
+    wake(true);
+    renderStep();
+    loop();
+  }
+  function notAllowed() { if (P.playing) { pause(); showToast("Tap the play button to start the sound."); } }
+  function pause() { P.playing = false; P.run++; stopClip(); if (synth) synth.cancel(); wake(false); if (P.lesson) { renderStep(); savePos(); } }
+  function stop() { pause(); }
+  function jump(i) {
+    const was = P.playing;
+    P.run++; stopClip(); if (synth) synth.cancel();
+    P.i = Math.max(0, Math.min(i, P.steps.length - 1));
+    renderStep(); savePos();
+    if (was) { P.playing = true; loop(); }
+  }
+
+  function finishLesson() {
+    P.playing = false; wake(false);
+    const key = `${P.level.id}-${P.lesson.n}`;
+    S.done[key] = true;
+    const idx = P.level.lessons.indexOf(P.lesson);
+    const nextLesson = P.level.lessons[idx + 1];
+    const nextLevel = C.levels[C.levels.indexOf(P.level) + 1];
+    const target = nextLesson ? { level: P.level.id, n: nextLesson.n } : nextLevel ? { level: nextLevel.id, n: nextLevel.lessons[0].n } : null;
+    S.pos = target ? { level: target.level, n: target.n, step: 0, it: -1 } : null;
+    save();
+    renderHome();
+    renderStep();
+    $("phase").textContent = "Lesson complete";
+    if (S.set.next && target) {
+      showToast("Next lesson in a moment");
+      const run = P.run;
+      setTimeout(() => { if (run === P.run && !$("player").hidden && !P.playing) openLesson(target.level, target.n, 0); }, 2500);
+    }
+  }
+
+  /* In the installed app, the phone's Back button closes the player instead of leaving the app. */
+  const standalone = window.matchMedia && matchMedia("(display-mode: standalone)").matches;
+  function closePlayer(fromBack) {
+    if ($("player").hidden) return;
+    stop(); $("player").hidden = true; document.body.style.overflow = ""; renderHome();
+    if (fromBack !== true && history.state && history.state.hk) { try { history.back(); } catch (_) {} }
+  }
+  window.addEventListener("popstate", () => { $("settings").hidden = true; closePlayer(true); });
+
+  /* ---------- Home ---------- */
+  let shownLevel = findLevel(S.set.level) ? S.set.level : "a1";
+  function renderHome() {
+    const levelsEl = $("levels");
+    levelsEl.textContent = "";
+    C.levels.forEach((lv) => {
+      const done = lv.lessons.filter((l) => S.done[`${lv.id}-${l.n}`]).length;
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "lv"; b.setAttribute("aria-pressed", String(lv.id === shownLevel));
+      b.innerHTML = `<b>${lv.name}</b><small>${done}/${lv.lessons.length}</small>`;
+      b.addEventListener("click", () => { shownLevel = lv.id; S.set.level = lv.id; save(); renderHome(); });
+      levelsEl.append(b);
+    });
+    const level = findLevel(shownLevel);
+    $("level-title").textContent = `${level.name} · ${level.title}`;
+    const doneCount = level.lessons.filter((l) => S.done[`${level.id}-${l.n}`]).length;
+    $("level-count").textContent = `${level.lessons.length} lessons · ${doneCount} done`;
+    renderSave(level);
+    const list = $("lessons");
+    list.textContent = "";
+    level.lessons.forEach((lesson) => {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      const done = S.done[`${level.id}-${lesson.n}`];
+      b.type = "button"; b.className = "lesson" + (done ? " done" : "");
+      b.innerHTML = `<span class="num">${done ? "✓" : lesson.n}</span><span class="txt"><b lang="de"></b><span></span></span><span class="meta">${lesson.items.length} words · ${minutes(lesson)} min</span>`;
+      b.querySelector(".txt b").textContent = lesson.t;
+      b.querySelector(".txt span").textContent = lesson.te;
+      b.setAttribute("aria-label", `Lesson ${lesson.n}, ${lesson.t}, ${lesson.te}${done ? ", done" : ""}`);
+      b.addEventListener("click", () => openLesson(level.id, lesson.n, 0));
+      li.append(b); list.append(li);
+    });
+    const slot = $("resume-slot");
+    slot.textContent = "";
+    const pos = S.pos && findLevel(S.pos.level) && findLesson(findLevel(S.pos.level), S.pos.n) ? S.pos : { level: "a1", n: 1, step: 0, it: -1 };
+    const pl = findLevel(pos.level), ls = findLesson(pl, pos.n);
+    const card = document.createElement("button");
+    card.type = "button"; card.className = "resume";
+    const started = S.pos && pos.it >= 0;
+    card.innerHTML = `<span class="play-dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></span><span><strong></strong><span></span></span>`;
+    card.querySelector("strong").textContent = S.pos ? (started ? "Continue listening" : "Start the next lesson") : "Start with lesson 1";
+    card.querySelector("span > span").textContent = `${pl.name} · Lesson ${ls.n} · ${ls.t}${started && pos.it < ls.items.length ? ` · word ${pos.it + 1}` : ""}`;
+    card.addEventListener("click", () => openLesson(pos.level, pos.n, pos.step || 0));
+    slot.append(card);
+  }
+
+  /* ---------- Saving a level's recordings on the phone ---------- */
+  const DL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>`;
+  const OK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+  const dlKey = (level) => `${level.id}|${A.voices.de}|${A.voices.en}|${A.levels[level.id].clips}`;
+  let saving = null;
+  function renderSave(level) {
+    const slot = $("level-save");
+    slot.textContent = "";
+    if (!clipsOn() || !A.levels[level.id] || !navigator.serviceWorker.controller) return;
+    const info = A.levels[level.id], mb = Math.max(1, Math.round(info.bytes / 1e6));
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "save";
+    if (saving && saving.level === level.id) { b.disabled = true; b.innerHTML = `${DL_ICON}<span>Saving ${level.name}… ${saving.pct}%</span>`; }
+    else if (S.dl[dlKey(level)]) { b.classList.add("saved"); b.innerHTML = `${OK_ICON}<span>${level.name} is saved on this phone</span>`; b.title = "Tap to check for missing files"; }
+    else b.innerHTML = `${DL_ICON}<span>Save ${level.name} for offline · ${mb} MB</span>`;
+    b.addEventListener("click", () => saveLevel(level));
+    slot.append(b);
+  }
+  async function saveLevel(level) {
+    if (saving) return;
+    if (offline()) { showToast("Connect to the internet to save this level."); return; }
+    try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (_) {}
+    const paths = [...new Set(level.lessons.flatMap((l) => HK.lessonClips(l).map((s) => HK.clipPath(A, s))))];
+    saving = { level: level.id, pct: 0 };
+    let next = 0, done = 0, failed = 0;
+    const show = () => { const pct = Math.floor((done / paths.length) * 100); if (pct !== saving.pct) { saving.pct = pct; if (shownLevel === level.id) renderSave(level); } };
+    renderSave(level);
+    /* The offline store keeps each file as it arrives. */
+    await Promise.all(Array.from({ length: 6 }, async () => {
+      while (next < paths.length) {
+        const rel = paths[next++];
+        try { const r = await fetch(rel); if (!r.ok) failed++; else await r.arrayBuffer(); } catch (_) { failed++; }
+        done++; show();
+      }
+    }));
+    saving = null;
+    if (!failed) { S.dl[dlKey(level)] = true; save(); showToast(`${level.name} is saved. It plays without internet now.`); }
+    else showToast(`${failed} files did not load. Tap Save again to finish.`);
+    if (shownLevel === level.id) renderSave(level);
+  }
+
+  function renderVoiceAlert() {
+    const el = $("voice-alert");
+    if (!el) return;
+    el.textContent = "";
+    if (clipsOn()) return;
+    if (!synth) { el.innerHTML = `<div class="alert"><b>No speech in this browser</b><p>Open this page in Safari on iPhone or Chrome on Android.</p></div>`; return; }
+    if (voices.length && !listFor("de").length) {
+      el.innerHTML = `<div class="alert"><b>No German voice on this phone yet</b><p>Open Settings, search for Text-to-speech output, choose Speech Services by Google, then install the voice data for Deutsch (Deutschland). Then reopen this page.</p></div>`;
+      return;
+    }
+    /* On a computer, Google Deutsch exists only in Google Chrome. Say so when this browser has only plain voices. */
+    const best = listFor("de")[0];
+    if (best && tierOf(best) === TIERS.length - 1 && !/Android/i.test(navigator.userAgent)) {
+      el.innerHTML = `<div class="alert"><b>Google's German voice is not in this browser</b><p>For the Google Deutsch voice, open this page in Google Chrome with the internet on. Lessons still play here with this browser's own voice.</p></div>`;
+    }
+  }
+
+  /* ---------- Settings ---------- */
+  function fillVoiceMenus() {
+    ["de", "en"].forEach((lang) => {
+      const sel = $(`voice-${lang}`);
+      if (!sel) return;
+      const list = listFor(lang), chosen = voiceFor(lang);
+      sel.textContent = "";
+      if (!list.length) { const o = document.createElement("option"); o.textContent = "No voice found"; sel.append(o); sel.disabled = true; return; }
+      sel.disabled = false;
+      list.forEach((v) => { const o = document.createElement("option"); o.value = v.voiceURI; o.textContent = `${v.name} · ${[TIERS[tierOf(v)].label, v.localService ? "on this device" : "needs internet"].filter(Boolean).join(", ")}`; if (chosen && v.voiceURI === chosen.voiceURI) o.selected = true; sel.append(o); });
+    });
+  }
+  function chips(el, options, current, onPick) {
+    el.textContent = "";
+    options.forEach(([value, label]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = label; b.setAttribute("aria-pressed", String(value === current));
+      b.addEventListener("click", () => onPick(value));
+      el.append(b);
+    });
+  }
+  function renderSpeed() {
+    chips($("speed-bar"), [[0.7, "Slow 0.7×"], [0.8, "0.8×"], [0.9, "0.9×"], [1, "Normal 1×"]], S.set.rate, (v) => { S.set.rate = v; save(); rebuild(); renderSpeed(); });
+    chips($("gap-bar"), [[0.6, "Short"], [1, "Normal"], [1.6, "Long"]], S.set.gaps, (v) => { S.set.gaps = v; save(); rebuild(); renderSpeed(); });
+  }
+  /* A changed setting applies from the start of the current word. */
+  function rebuild() {
+    if (!P.lesson) return;
+    const it = currentItem();
+    P.steps = buildSteps(P.level, P.lesson);
+    jump(itemStart(it));
+  }
+  function openSettings() {
+    $("rec-row").hidden = !A; $("opt-rec").checked = S.set.rec;
+    $("voice-de-label").textContent = A ? "Phone voice, German (used without a recording)" : "German voice";
+    $("voice-en-label").textContent = A ? "Phone voice, English" : "English voice";
+    fillVoiceMenus(); $("opt-words").checked = S.set.words; $("opt-review").checked = S.set.review; $("opt-next").checked = S.set.next; $("opt-text").checked = S.set.text; renderSpeed(); $("settings").hidden = false; }
+
+  $("open-settings").addEventListener("click", openSettings);
+  $("open-settings-2").addEventListener("click", openSettings);
+  $("close-settings").addEventListener("click", () => { $("settings").hidden = true; });
+  $("settings").addEventListener("click", (e) => { if (e.target === $("settings")) $("settings").hidden = true; });
+  ["de", "en"].forEach((lang) => {
+    $(`voice-${lang}`).addEventListener("change", (e) => { S.set[lang] = e.target.value; save(); });
+    $(`test-${lang}`).addEventListener("click", () => {
+      const was = P.playing; if (was) pause();
+      synth && synth.cancel();
+      speak(lang === "de" ? "Guten Tag! Ich lerne Deutsch, und das macht Spaß." : "Good day! I am learning German.", lang, S.set.rate);
+    });
+  });
+  $("opt-words").addEventListener("change", (e) => { S.set.words = e.target.checked; save(); rebuild(); });
+  $("opt-review").addEventListener("change", (e) => { S.set.review = e.target.checked; save(); rebuild(); });
+  $("opt-rec").addEventListener("change", (e) => { S.set.rec = e.target.checked; save(); renderHome(); renderVoiceAlert(); if (P.lesson) rebuild(); });
+  $("opt-next").addEventListener("change", (e) => { S.set.next = e.target.checked; save(); });
+  $("opt-text").addEventListener("change", (e) => { S.set.text = e.target.checked; save(); if (P.lesson) renderStep(); });
+  let resetArmed = false;
+  $("reset").addEventListener("click", (e) => {
+    if (!resetArmed) { resetArmed = true; e.target.textContent = "Tap again to clear all progress"; setTimeout(() => { resetArmed = false; e.target.textContent = "Clear my progress"; }, 4000); return; }
+    S.done = {}; S.pos = null; save(); resetArmed = false; e.target.textContent = "Clear my progress"; renderHome(); showToast("Progress cleared");
+  });
+
+  $("big").addEventListener("click", () => { P.playing ? pause() : play(); });
+  $("close-player").addEventListener("click", closePlayer);
+  $("next").addEventListener("click", () => { const it = currentItem(); const i = P.steps.findIndex((s) => s.it > it); jump(i < 0 ? P.steps.length - 1 : i); });
+  $("prev").addEventListener("click", () => {
+    const it = currentItem(), start = itemStart(it);
+    if (P.i - start > 2 || it <= -1) { jump(start); return; }
+    const prev = [...P.steps].reverse().find((s) => s.it < it);
+    jump(prev ? itemStart(prev.it) : 0);
+  });
+  $("again").addEventListener("click", () => jump(itemStart(currentItem())));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && P.playing) wake(true); });
+  document.addEventListener("keydown", (e) => {
+    if ($("player").hidden || !$("settings").hidden) return;
+    if (e.key === " " && e.target === document.body) { e.preventDefault(); P.playing ? pause() : play(); }
+    if (e.key === "Escape") closePlayer();
+  });
+
+  let toastTimer = null;
+  function showToast(text) {
+    let t = document.querySelector(".toast");
+    if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
+    t.textContent = text;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 3800);
+  }
+
+  /* Install button: shown only where the browser offers to install this page (the hosted copy, not claude.ai). */
+  let installEvent = null;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvent = e; $("install").hidden = false; });
+  $("install").addEventListener("click", async () => {
+    if (!installEvent) return;
+    installEvent.prompt();
+    try { await installEvent.userChoice; } catch (_) {}
+    installEvent = null; $("install").hidden = true;
+  });
+  window.addEventListener("appinstalled", () => { $("install").hidden = true; showToast("Installed. Open Hörkurs from your home screen."); });
+
+  /* The save button needs the offline helper, which takes over a moment after the very first visit. */
+  try { navigator.serviceWorker.addEventListener("controllerchange", () => renderHome()); } catch (_) {}
+
+  /* Lock-screen and headphone buttons. */
+  try {
+    const ms = navigator.mediaSession;
+    ms.setActionHandler("play", () => { if (P.lesson && !P.playing) play(); });
+    ms.setActionHandler("pause", () => { if (P.playing) pause(); });
+    ms.setActionHandler("nexttrack", () => { if (P.lesson) $("next").click(); });
+    ms.setActionHandler("previoustrack", () => { if (P.lesson) $("prev").click(); });
+  } catch (_) {}
+
+  renderSpeed();
+  renderHome();
+})();
+</script>
+
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>
